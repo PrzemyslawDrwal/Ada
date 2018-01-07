@@ -1,4 +1,4 @@
-with Ada.Text_IO, Ada.Calendar, Ada.Numerics.Discrete_Random;
+with Ada.Text_IO, Ada.Calendar;
 use Ada.Text_IO, Ada.Calendar;
 
 with NT_Console;              use NT_Console;
@@ -8,8 +8,13 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Calendar.Formatting;
 use Ada.Calendar.Formatting;
 
+with Ada.Numerics.Float_Random;
+use Ada.Numerics.Float_Random;
+
 
 with Ada.Directories; use Ada.Directories;
+
+
 
 package body Obsluga_F is 
    --type Style is (Lager, Ale, Hefeweizen, Abbaye, Kveik);
@@ -18,8 +23,9 @@ package body Obsluga_F is
    procedure Fermentacja (Nazwa_Piwa : in String; Styl : in Style; Czas_Fermentacji : in Duration; Temp_Otoczenia : in Integer; Temp_Min_O : in Float; Temp_Max_O : in Float) is
       Aktualna_Temperatura : Float := 18.0;
       Chlodzenie_Aktywne : Boolean := False;
-      Aktualna_Temperatura_Otoczenia : Integer;
+      Aktualna_Temperatura_Otoczenia : Float;
       Koniec_Fermentacja : Boolean := False with Atomic;
+      Fermentacja_Zakonczona : Boolean := False with Atomic;
       Bledy : String := "Brak bledow                                ";
       ---------------------- exceptions --------------------------  
       Blad_Temperatury_Fermentacji: exception;
@@ -71,11 +77,11 @@ package body Obsluga_F is
             if Temperatura < 0.0 then
                raise Blad_Temperatury_Fermentacji;
             end if;
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       exception
          when Blad_Temperatury_Fermentacji =>
-            Koniec_Fermentacja := True;
+            Fermentacja_Zakonczona := True;
             Bledy := "Temperatura fermentacji nizsza od 0 "; 
       end Termometr_Fermentor;
 	
@@ -96,7 +102,7 @@ package body Obsluga_F is
             Bufor_Pomiar_Temperatury_Fermentor.Pobierz(Temp_Tymczasowa);
             Aktualna_Temperatura := Temp_Tymczasowa;
             --Put_Line(Aktualna_Temperatura'Img);
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Czytaj_Termometr_Fermentor;
 	
@@ -104,22 +110,22 @@ package body Obsluga_F is
       ------------Pomiar temperatury otoczenia -------------
 
       protected Bufor_Pomiar_Temperatury_Otoczenie is
-         entry Wstaw(T : in Integer);
-         entry Pobierz(T : out Integer);
+         entry Wstaw(T : in Float);
+         entry Pobierz(T : out Float);
       private 
-         Temp : Integer;
+         Temp : Float;
          Pusty : Boolean := True;
       end Bufor_Pomiar_Temperatury_Otoczenie;
 	
       protected body Bufor_Pomiar_Temperatury_Otoczenie is
-         entry Wstaw(T : in Integer)
+         entry Wstaw(T : in Float)
            when Pusty is
          begin
             Temp := T;
             Pusty := False;
          end Wstaw;
 		
-         entry Pobierz (T : out Integer)
+         entry Pobierz (T : out Float)
            when not Pusty is
          begin	
             T := Temp;
@@ -129,28 +135,25 @@ package body Obsluga_F is
 	
       task Termometr_Otoczenie;
       task Czytaj_Termometr_Otoczenie;	
-	
       task body Termometr_Otoczenie is
-         Temperatura : Integer := 18;
-         subtype Delta_Temp_Otoczenie is Integer range -4..4;
-         package Losuj_Delte is new Ada.Numerics.Discrete_Random(Delta_Temp_Otoczenie);
-         use Losuj_Delte;
-         Temp_Los : Delta_Temp_Otoczenie;
+         Temperatura : Float := Float(Temp_Otoczenia);
+         Temp_Los : Float := 1.0;
          Gen: Generator; 		
       begin
          Reset(Gen);
          loop	
             Temp_Los := Random(Gen);
-            Temperatura := 18 + Temp_Los;
+			Temp_Los := 2.0 * Temp_Los;
+            Temperatura := Temperatura + Temp_Los;
             Bufor_Pomiar_Temperatury_Otoczenie.Wstaw(Temperatura);
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Termometr_Otoczenie;	
 	
       task body Czytaj_Termometr_Otoczenie is
-         Okres_Odczytu : Duration := 10.0;
+         Okres_Odczytu : Duration := 25.0;
          Aktualny_Czas_Odczyt_Temperatury : Ada.Calendar.Time;
-         Temp_Tymczasowa : Integer;
+         Temp_Tymczasowa : Float;
       begin
          Aktualny_Czas_Odczyt_Temperatury := Ada.Calendar.Clock;
          loop
@@ -159,7 +162,7 @@ package body Obsluga_F is
             Bufor_Pomiar_Temperatury_Otoczenie.Pobierz(Temp_Tymczasowa);
             Aktualna_Temperatura_Otoczenia := Temp_Tymczasowa;
             --Put_Line(Temp_Tymczasowa'Img);
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Czytaj_Termometr_Otoczenie;
 	
@@ -185,7 +188,7 @@ package body Obsluga_F is
             else
                delay 1.0;
             end select;
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Modul_Chlodzenia; 
 	
@@ -231,14 +234,14 @@ package body Obsluga_F is
                --Put_Line("Chlodzenie nieaktywne" & Aktualna_Temperatura'Img);
             end if;
 		
-            if((Aktualna_Temperatura_Otoczenia < Integer(Temp_Max_O) ) and Aktualna_Temperatura_Otoczenia > Integer(Temp_Min_O)) then
+            if((Aktualna_Temperatura_Otoczenia < Temp_Max_O ) and Aktualna_Temperatura_Otoczenia > Temp_Min_O) then
                Temp_Otoczenia_Ok := True;
                --Put_Line("Temp otoczenia ok" & Aktualna_Temperatura_Otoczenia'Img);
             else 
                Temp_Otoczenia_Ok := False;
                --Put_Line("Temp otoczenia nie ok" & Aktualna_Temperatura_Otoczenia'Img);
             end if;
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Modul_Sterowania;
       ------------------------------------------------------
@@ -266,7 +269,7 @@ package body Obsluga_F is
             delay until Aktualny_Czas_Zapisu;
             Aktualny_Czas_Zapisu := Aktualny_Czas_Zapisu + Okres_Zapisu;
             Put_Line(P2, Image(Aktualny_Czas_Zapisu) & " Temperatura: " & Aktualna_Temperatura'Img);
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Zapis_Do_Pliku;
 		
@@ -286,11 +289,11 @@ package body Obsluga_F is
          loop
             Aktualny_Czas := Ada.Calendar.Clock;
             if(Aktualny_Czas > Czas_Startowy) then
-               Koniec_Fermentacja := True;
+               Fermentacja_Zakonczona := True;
             else
-               Koniec_Fermentacja := False;
+               Fermentacja_Zakonczona := False;
             end if;
-            exit when Koniec_Fermentacja;
+            exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Pomiar_Czasu;
 
@@ -319,14 +322,22 @@ package body Obsluga_F is
          Goto_XY (17, 18);
          Put("Please press S to exit and go back to start menu");
          loop
-            Set_Background (Cyan);
-            Set_Foreground (Blue);
-            Goto_XY (0, 10);
-            Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
-            Goto_XY (0, 12);
-            Put("Chlodzenie Aktywne? " & Chlodzenie_Aktywne'Img);
-            Goto_XY (0, 14);
-            Put("Aktualna Temperatura Otoczenia " & Aktualna_Temperatura_Otoczenia'Img);
+            if(Fermentacja_Zakonczona) then
+               Clear_Screen (Cyan);
+               Set_Background (Cyan);
+               Set_Foreground (Yellow);
+               Goto_XY (12, 10);
+               Put("Fermentacja skonczona nacisnij S aby wrocic do menu glownego");
+            else
+               Set_Background (Cyan);
+               Set_Foreground (Blue);
+               Goto_XY (0, 10);
+               Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+               Goto_XY (0, 12);
+               Put("Chlodzenie Aktywne? " & Chlodzenie_Aktywne'Img);
+               Goto_XY (0, 14);
+               Put("Aktualna Temperatura Otoczenia " & Aktualna_Temperatura_Otoczenia'Img);
+            end if;
             delay 0.05;
             exit when Koniec_Fermentacja;
          end loop; 

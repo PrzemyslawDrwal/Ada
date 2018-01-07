@@ -7,6 +7,8 @@ with Obsluga_F;
 use Obsluga_F;
 with Obsluga_Z;
 use Obsluga_Z;
+with Obsluga_G;
+use Obsluga_G;
 
 package body Main_Menu is
    procedure Menu is
@@ -14,7 +16,7 @@ package body Main_Menu is
       --type Style is (Lager, Ale, Hefeweizen, Abbaye, Kveik);
       Styl : Style;
 
-      Czas_Fermentacji : Duration := 1000.0;
+      Czas_Fermentacji : Duration := 100.0;
       Temp_Otoczenia : Integer := 18;
       Zn: Character := ' ';
       Temp_Max : Float;
@@ -31,6 +33,12 @@ package body Main_Menu is
       Czas_Faza_4 : Duration := 100.0; 
       Temp_Faza_4 : Float := 78.0;
       Bledy : String := "Brak bledow                                ";
+      Chmielenie : Integer := 1;
+      Czas_Gotowania : Duration; 
+      Chmielenie_Jeden : Duration;
+      Chmielenie_Dwa : Duration; 
+      Chmielenie_Trzy : Duration;
+      Temp_Koniec_Chlodzenia : Float;
 
 
       procedure Get_Temp_Max is
@@ -109,9 +117,47 @@ package body Main_Menu is
       exception
          when Data_Error => Put_Line("Data Error! Podaj czas fazy " & Faza'Img & " (Duration)"); return Duration'Value(Get_Line);
          when Constraint_Error => Put_Line("Constraint Error! Podaj czas fazy " & Faza'Img & " (Duration)"); return Duration'Value(Get_Line);
-      end Pobierz_Czas;			 
+      end Pobierz_Czas;	
+      
+      function Pobierz_Czas_Gotowania return Duration is
+      begin
+         Clear_Screen (Light_Cyan);
+         Set_Foreground (Blue);
+         Set_Background (Yellow);
+         Goto_XY (31, 4);
+         Put("Podaj czas gotowania ");
+         return Duration'Value(Get_Line);
+         exception
+         when Data_Error => Put_Line("Data Error! Podaj czas gotowania (Duration)"); return Duration'Value(Get_Line);
+         when Constraint_Error => Put_Line("Constraint Error! Podaj czas gotowania (Duration)"); return Duration'Value(Get_Line);
+      end Pobierz_Czas_Gotowania;	
 			
-
+      function Pobierz_Czas_Chmielenia return Duration is
+      begin
+         Clear_Screen (Light_Cyan);
+         Set_Foreground (Blue);
+         Set_Background (Yellow);
+         Goto_XY (31, 4);
+         Put("Podaj czas chmielenia " & Chmielenie'Img & " ");
+         return Duration'Value(Get_Line);
+      exception
+         when Data_Error => Put_Line("Data Error! Podaj czas chmielenia " & Chmielenie'Img & " (Duration)"); return Duration'Value(Get_Line);
+         when Constraint_Error => Put_Line("Constraint Error! Podaj czas chmielenia " & Chmielenie'Img & " (Duration)"); return Duration'Value(Get_Line);
+      end Pobierz_Czas_Chmielenia;	
+      
+      function Pobierz_Temp_Koniec_Chlodzenia return Float is
+      begin
+         Clear_Screen (Light_Cyan);
+         Set_Foreground (Blue);
+         Set_Background (Yellow);
+         Goto_XY (27, 4);
+         Put("Podaj temperature Koniec Chlodzenia ");
+         return Float'Value(Get_Line);
+      exception
+         when Data_Error => Put_Line("Data Error! Podaj temperature Koniec Chlodzenia (float)"); return Float'Value(Get_Line);
+         when Constraint_Error => Put_Line("Constraint Error! Podaj temperature Koniec Chlodzenia (float)"); return Float'Value(Get_Line);
+      end Pobierz_Temp_Koniec_Chlodzenia;
+      
       procedure Get_Styl_Piwa is
       begin
          Clear_Screen (Light_Cyan);
@@ -159,6 +205,8 @@ package body Main_Menu is
          Put("Nacisnij F aby zaczac fermentacje");
          Goto_XY (25, 4);
          Put("Nacisnij Z aby zaczac zacieranie");
+         Goto_XY (25, 6);
+         Put("Nacisnij G aby zaczac gotowanie i chlodzenie");
          Set_Foreground (Yellow);
          Goto_XY (30, 8);
          Put("Please press Q to exit");
@@ -184,8 +232,18 @@ package body Main_Menu is
             Temp_Faza_4 :=  Pobierz_Temp;
             Faza := 1;	
             Zacieranie(Czas_Faza_1, Temp_Faza_1, Czas_Faza_2, Temp_Faza_2, Czas_Faza_3, Temp_Faza_3, Czas_Faza_4, Temp_Faza_4);
+         elsif ((Zn = 'g') or (Zn = 'G')) then
+            Czas_Gotowania := Pobierz_Czas_Gotowania;
+            Chmielenie := 1;
+            Chmielenie_Jeden := Pobierz_Czas_Chmielenia;
+            Chmielenie := 2;
+            Chmielenie_Dwa := Pobierz_Czas_Chmielenia;
+            Chmielenie := 3;
+            Chmielenie_Trzy := Pobierz_Czas_Chmielenia;
+            Temp_Koniec_Chlodzenia := Pobierz_Temp_Koniec_Chlodzenia;        
+            Gotowanie_Chlodzenie(Czas_Gotowania, Chmielenie_Jeden, Chmielenie_Dwa, Chmielenie_Trzy, Temp_Koniec_Chlodzenia);
          end if;
-         delay 0.05;
+         delay 0.5;
          exit when Zn in 'q'|'Q';
       end loop;
       Set_Foreground (Gray);

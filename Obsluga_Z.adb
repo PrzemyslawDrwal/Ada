@@ -9,12 +9,15 @@ package body Obsluga_Z is
    procedure Zacieranie(Czas_Faza_1 : in Duration; Temp_Faza_1 : in Float; Czas_Faza_2 : in Duration; Temp_Faza_2 : in Float; Czas_Faza_3 : in Duration; Temp_Faza_3 : in Float; Czas_Faza_4 : in Duration; Temp_Faza_4 : in Float )  is
       Podgrzewanie_Aktywne : Boolean := False;
       Aktualna_Temperatura : Float := 30.0;
+      Poprzednia_Temperatura : Float := 30.0;
+      Temperatura_Wieksza : Boolean := False with Atomic;
       Faza : Integer := 1;
       Bledy : String := "Brak bledow                                ";
       Koniec_Zacieranie : Boolean := False with Atomic;
+      Koniec_fazy_4 : Boolean := False with Atomic;
       Zn: Character := ' ';
       ---------------------- exceptions --------------------------  
-	  Blad_Temperatury_Zacierania_1: exception;
+      Blad_Temperatury_Zacierania_1: exception;
       Blad_Temperatury_Zacierania_2: exception;
 
       protected Bufor_Temperatury is
@@ -53,6 +56,7 @@ package body Obsluga_Z is
             select 
                accept Aktywuj_Podgrzewanie do
                   Podgrzewanie_Aktywne := True;
+                  Poprzednia_Temperatura := Temperatura_Tymczasowa;
                   Temperatura_Tymczasowa := Temperatura_Tymczasowa + 1.0;
                   Bufor_Temperatury.Wstaw(Temperatura_Tymczasowa);
                   delay 1.0;
@@ -67,7 +71,7 @@ package body Obsluga_Z is
                Bufor_Temperatury.Wstaw(Temperatura_Tymczasowa);
 			   
             end select;
-            exit when Koniec_Zacieranie;
+            exit when Koniec_Zacieranie or Koniec_fazy_4;
          end loop;
       end Modul_Podgrzewania; 
 	
@@ -80,7 +84,7 @@ package body Obsluga_Z is
       begin
          Aktualny_Czas_Odczyt_Temperatury := Ada.Calendar.Clock;
          loop
-		 if Aktualna_Temperatura > 80.0 then
+            if Aktualna_Temperatura > 80.0 then
                raise Blad_Temperatury_Zacierania_1;
             end if;
             if Aktualna_Temperatura < 30.0 then
@@ -90,11 +94,11 @@ package body Obsluga_Z is
             Aktualny_Czas_Odczyt_Temperatury := Aktualny_Czas_Odczyt_Temperatury + Okres_Odczytu;	
             Bufor_Temperatury.Pobierz(Temp_Tymczasowa);
             Aktualna_Temperatura := Temp_Tymczasowa;
-            exit when Koniec_Zacieranie;
+            exit when Koniec_Zacieranie or Koniec_fazy_4;
          end loop;
-		 	exception 
-			when Blad_Temperatury_Zacierania_1 => Bledy := "Temp too high";
-			when Blad_Temperatury_Zacierania_2 => Bledy := "Temp too low";
+      exception 
+         when Blad_Temperatury_Zacierania_1 => Bledy := "Temp too high";
+         when Blad_Temperatury_Zacierania_2 => Bledy := "Temp too low";
       end Termometr;
 	
 	
@@ -143,13 +147,14 @@ package body Obsluga_Z is
                   delay until Aktualny_Czas;
                   Modul_Podgrzewania.Wylacz_Podgrzewanie;
                   Faza := 1;
+                  Koniec_fazy_4 := True;
                   exit;
                else 
                   Modul_Podgrzewania.Aktywuj_Podgrzewanie;
                end if;
             when others => Modul_Podgrzewania.Wylacz_Podgrzewanie;
             end case;
-            exit when Koniec_Zacieranie;
+            exit when Koniec_Zacieranie or Koniec_fazy_4;
          end loop;
       end Zacieranie;
       
@@ -175,12 +180,23 @@ package body Obsluga_Z is
          Goto_XY (17, 18);
          Put("Please press S to exit and go back to start menu");
          loop
-            Set_Background (Cyan);
-            Set_Foreground (Blue);
-            Goto_XY (0, 10);
-            Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
-            Goto_XY (0, 12);
-            Put("Faza: " & Faza'Img);
+            if(Koniec_fazy_4) then
+               Clear_Screen (Cyan);
+               Set_Background (Cyan);
+               Set_Foreground (Yellow);
+               Goto_XY (12, 10);
+               Put("Zacieranie skonczone nacisnij S aby wrocic do menu glownego");
+            else
+               Set_Background (Cyan);
+               Set_Foreground (Blue);
+               Goto_XY (0, 10);
+               Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+               Temperatura_Wieksza := (Poprzednia_Temperatura<Aktualna_Temperatura);
+               Goto_XY (0, 12);
+               Put("Aktualna Temperatura wieksza od poprzdniej? " & Temperatura_Wieksza'Img);
+               Goto_XY (0, 14);
+               Put("Faza: " & Faza'Img);
+            end if;
             delay 0.05;
             exit when Koniec_Zacieranie;
          end loop; 
@@ -195,4 +211,5 @@ package body Obsluga_Z is
       end loop;
       Koniec_Zacieranie := True;
    end Zacieranie;
+   
 end Obsluga_Z;
