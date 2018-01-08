@@ -26,7 +26,6 @@ package body Obsluga_F is
       Aktualna_Temperatura_Otoczenia : Float;
       Koniec_Fermentacja : Boolean := False with Atomic;
       Fermentacja_Zakonczona : Boolean := False with Atomic;
-      Bledy : String := "Brak bledow                                ";
       ---------------------- exceptions --------------------------  
       Blad_Temperatury_Fermentacji: exception;
 	  
@@ -82,7 +81,8 @@ package body Obsluga_F is
       exception
          when Blad_Temperatury_Fermentacji =>
             Fermentacja_Zakonczona := True;
-            Bledy := "Temperatura fermentacji nizsza od 0 "; 
+            Goto_XY (0, 16);
+            Put("Temperatura fermentacji jest bledna");
       end Termometr_Fermentor;
 	
       task body Czytaj_Termometr_Fermentor is
@@ -143,7 +143,7 @@ package body Obsluga_F is
          Reset(Gen);
          loop	
             Temp_Los := Random(Gen);
-			Temp_Los := 2.0 * Temp_Los;
+            Temp_Los := 2.0 * Temp_Los;
             Temperatura := Temperatura + Temp_Los;
             Bufor_Pomiar_Temperatury_Otoczenie.Wstaw(Temperatura);
             exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
@@ -304,6 +304,7 @@ package body Obsluga_F is
       task body Display_Menu is
 
       begin
+         --loop
          Clear_Screen (Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
@@ -315,12 +316,12 @@ package body Obsluga_F is
          Goto_XY (0, 4);
          Put_Line("Nazwa Piwa: " & Nazwa_Piwa);
          Goto_XY (0, 6);
-         Put("Zadany Zakres Temperatury " & Temp_Min'Img & " -" & Temp_Max'Img);
+         Put("Zadany Zakres Temperatury " & Temp_Min_O'Img & " -" & Temp_Max_O'Img);
          Goto_XY (0, 8);
          Put("Podana Temperatura Otoczenia " & Temp_Otoczenia'Img);
          Set_Foreground (Yellow);
-         Goto_XY (17, 18);
-         Put("Please press S to exit and go back to start menu");
+         Goto_XY (22, 18);
+         Put("Nacisnij S aby wrocic do menu glownego");
          loop
             if(Fermentacja_Zakonczona) then
                Clear_Screen (Cyan);
@@ -334,6 +335,10 @@ package body Obsluga_F is
                Goto_XY (0, 10);
                Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
                Goto_XY (0, 12);
+               Set_Foreground (Cyan);
+               Put("Chlodzenie Aktywne?       ");
+               Goto_XY (0, 12);
+               Set_Foreground (Blue);
                Put("Chlodzenie Aktywne? " & Chlodzenie_Aktywne'Img);
                Goto_XY (0, 14);
                Put("Aktualna Temperatura Otoczenia " & Aktualna_Temperatura_Otoczenia'Img);

@@ -169,9 +169,9 @@ package body Obsluga_G is
                      end if;		
                   when TRZY =>
                      Aktualne_Chmielenie := WAIT;
-					when WAIT =>
-					delay until ACzas_Gotowania + Czas_Gotowania - 1.0;
-					Aktualne_Chmielenie := INIT;
+                  when WAIT =>
+                     delay until ACzas_Gotowania + Czas_Gotowania - 1.0;
+                     Aktualne_Chmielenie := INIT;
                   when others =>
                      null;
                   end case;
@@ -192,53 +192,64 @@ package body Obsluga_G is
       task body Display_Menu is
 
       begin
+         --loop
+         Clear_Screen (Cyan);
+         Set_Foreground (Blue);
+         Set_Background (Yellow);
+         Goto_XY (20, 0);
+         Put_Line("* KONTROLA FERMENTACJI PIWA - CHMIELENIE * ");
+         Set_Background (Cyan);
+         Goto_XY (0, 2);
+         Put_Line("Czas Gotowania: " & Czas_Gotowania'Img);
+         Goto_XY (0, 4);
+         Put_Line("Chmielenie Jeden: " & Chmielenie_Jeden'Img);
+         Goto_XY (0, 6);
+         Put("Chmielenie Dwa: " & Chmielenie_Dwa'Img);
+         Goto_XY (0, 8);
+         Put("Chmielenie Trzy: " & Chmielenie_Trzy'Img);
+         Goto_XY (0, 10);
+         Put("Temp Koniec Chlodzenia: " & Temp_Koniec_Chlodzenia'Img);
+         Set_Foreground (Yellow);
+         Goto_XY (22, 24);
+         Put("Nacisnij S aby wrocic do menu glownego");
          loop
-            Clear_Screen (Cyan);
-            Set_Foreground (Blue);
-            Set_Background (Yellow);
-            Goto_XY (20, 0);
-            Put_Line("* KONTROLA FERMENTACJI PIWA - CHMIELENIE * ");
-            Set_Background (Cyan);
-            Goto_XY (0, 2);
-            Put_Line("Czas Gotowania: " & Czas_Gotowania'Img);
-            Goto_XY (0, 4);
-            Put_Line("Chmielenie Jeden: " & Chmielenie_Jeden'Img);
-            Goto_XY (0, 6);
-            Put("Chmielenie Dwa: " & Chmielenie_Dwa'Img);
-            Goto_XY (0, 8);
-            Put("Chmielenie Trzy: " & Chmielenie_Trzy'Img);
-            Goto_XY (0, 10);
-            Put("Temp Koniec Chlodzenia: " & Temp_Koniec_Chlodzenia'Img);
-            Goto_XY (0, 20);
-            case (Aktualne_Chmielenie) is
-            when INIT =>
-               Put_Line("Dodaj pierwsza porcje chmielu");
-               when JEDEN =>
-                  Put_Line("Dodaj druga porcje chmielu"); 
-               when DWA => 
-                  Put_Line("Dodaj trzecia porcje chmielu");
-               when others =>
-                  null;
-            end case;
-            Set_Foreground (Yellow);
-            Goto_XY (17, 24);
-            Put("Please press S to exit and go back to start menu");
-            --loop
             if(Chmielenie_Zakonczone) then
                Clear_Screen (Cyan);
                Set_Background (Cyan);
                Set_Foreground (Yellow);
-               Goto_XY (12, 10);
-               Put("Chmielenieelenie skonczone nacisnij S aby wrocic do menu glownego");
+               Goto_XY (10, 10);
+               Put("Gotowanie skonczone nacisnij S aby wrocic do menu glownego");
             else
                Set_Background (Cyan);
                Set_Foreground (Blue);
                Goto_XY (0, 12);
+               Set_Foreground (Cyan);
+               Put("Stan:              ");
+               Goto_XY (0, 12);
+               Set_Foreground (Blue);
                Put("Stan: " & Aktualny_Stan'Img);
                Goto_XY (0, 14);
+               Set_Foreground (Cyan);
+               Put("Chmielenie:              ");
+               Goto_XY (0, 14);
+               Set_Foreground (Blue);
                Put("Chmielenie: " & Aktualne_Chmielenie'Img);
                Goto_XY (0, 16);
                Put("Aktualna Temperatura: " & Aktualna_Temperatura'Img);
+               
+               Goto_XY (0, 20);
+               case (Aktualne_Chmielenie) is
+               when JEDEN =>
+                  Put_Line("Dodaj pierwsza porcje chmielu");
+               when DWA =>
+                  Put_Line("Dodaj druga porcje chmielu"); 
+               when TRZY => 
+                  Put_Line("Dodaj trzecia porcje chmielu");
+               when others =>
+                  Set_Foreground (Cyan);
+                  Put_Line("                               ");
+               end case;
+               
             end if;
             delay 0.05;
             exit when Koniec_Chmielenie;

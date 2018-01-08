@@ -10,9 +10,7 @@ package body Obsluga_Z is
       Podgrzewanie_Aktywne : Boolean := False;
       Aktualna_Temperatura : Float := 30.0;
       Poprzednia_Temperatura : Float := 30.0;
-      Temperatura_Wieksza : Boolean := False with Atomic;
       Faza : Integer := 1;
-      Bledy : String := "Brak bledow                                ";
       Koniec_Zacieranie : Boolean := False with Atomic;
       Koniec_fazy_4 : Boolean := False with Atomic;
       Zn: Character := ' ';
@@ -97,8 +95,12 @@ package body Obsluga_Z is
             exit when Koniec_Zacieranie or Koniec_fazy_4;
          end loop;
       exception 
-         when Blad_Temperatury_Zacierania_1 => Bledy := "Temp too high";
-         when Blad_Temperatury_Zacierania_2 => Bledy := "Temp too low";
+         when Blad_Temperatury_Zacierania_1 =>             
+			Goto_XY (0, 16);
+            Put("Temperatura zacierania za wysoka");	 
+         when Blad_Temperatury_Zacierania_2 =>
+		 	Goto_XY (0, 16);
+            Put("Temperatura zacierania za niska");	 
       end Termometr;
 	
 	
@@ -162,11 +164,12 @@ package body Obsluga_Z is
       task body Display_Menu is
 
       begin
+         --loop
          Clear_Screen (Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (20, 0);
-         Put_Line("* KONTROLA FERMENTACJI PIWA - ZACIERANIE * ");
+         Put_Line("* KONTROLA FERMENTACJI PIWA - ZACIERANIE *");
          Set_Background (Cyan);
          Goto_XY (0, 2);
          Put_Line("Temp Faza 1: " & Temp_Faza_1'Img);
@@ -177,24 +180,21 @@ package body Obsluga_Z is
          Goto_XY (0, 8);
          Put_Line("Temp Faza 4: " & Temp_Faza_4'Img);
          Set_Foreground (Yellow);
-         Goto_XY (17, 18);
-         Put("Please press S to exit and go back to start menu");
+         Goto_XY (22, 18);
+         Put("Nacisnij S aby wrocic do menu glownego");
          loop
             if(Koniec_fazy_4) then
                Clear_Screen (Cyan);
                Set_Background (Cyan);
                Set_Foreground (Yellow);
-               Goto_XY (12, 10);
+               Goto_XY (10, 10);
                Put("Zacieranie skonczone nacisnij S aby wrocic do menu glownego");
             else
                Set_Background (Cyan);
                Set_Foreground (Blue);
                Goto_XY (0, 10);
                Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
-               Temperatura_Wieksza := (Poprzednia_Temperatura<Aktualna_Temperatura);
                Goto_XY (0, 12);
-               Put("Aktualna Temperatura wieksza od poprzdniej? " & Temperatura_Wieksza'Img);
-               Goto_XY (0, 14);
                Put("Faza: " & Faza'Img);
             end if;
             delay 0.05;

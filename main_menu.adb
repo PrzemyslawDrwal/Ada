@@ -39,6 +39,8 @@ package body Main_Menu is
       Chmielenie_Dwa : Duration; 
       Chmielenie_Trzy : Duration;
       Temp_Koniec_Chlodzenia : Float;
+      Blad_Czasu_Chmielenia: exception;
+      Blad_Temperatury_Fazy: exception;
 
 
       procedure Get_Temp_Max is
@@ -94,14 +96,34 @@ package body Main_Menu is
       end Get_Nazwa_Piwa;
 	  
       function Pobierz_Temp return Float is
+         Temperatura_temp : Float;
       begin
          Clear_Screen (Light_Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
          Put("Podaj temperature fazy " & Faza'Img & " ");
-         return Float'Value(Get_Line);
+         Temperatura_temp := Float'Value(Get_Line);
+         case (Faza) is
+         when 2 => if (Temp_Faza_1 > Temperatura_temp) then 
+               raise Blad_Temperatury_Fazy;
+            else 
+               return Temperatura_temp;
+            end if;
+         when 3 => if (Temp_Faza_2 > Temperatura_temp) then 
+               raise Blad_Temperatury_Fazy;
+            else 
+               return Temperatura_temp;
+            end if;
+         when 4 => if (Temp_Faza_3 > Temperatura_temp) then 
+               raise Blad_Temperatury_Fazy;
+            else 
+               return Temperatura_temp;
+            end if;
+         when others => return Temperatura_temp;
+         end case;
       exception
+         when Blad_Temperatury_Fazy => Put_Line("Error! Podaj temperature fazy " & Faza'Img & " wieksza od poprzedniej"); return Float'Value(Get_Line);
          when Data_Error => Put_Line("Data Error! Podaj temperature fazy " & Faza'Img & " (float)"); return Float'Value(Get_Line);
          when Constraint_Error => Put_Line("Constraint Error! Podaj temperature fazy " & Faza'Img & " (float)"); return Float'Value(Get_Line);
       end Pobierz_Temp;
@@ -119,6 +141,19 @@ package body Main_Menu is
          when Constraint_Error => Put_Line("Constraint Error! Podaj czas fazy " & Faza'Img & " (Duration)"); return Duration'Value(Get_Line);
       end Pobierz_Czas;	
       
+      function Pobierz_Czas_Fermentacji return Duration is
+      begin
+         Clear_Screen (Light_Cyan);
+         Set_Foreground (Blue);
+         Set_Background (Yellow);
+         Goto_XY (30, 4);
+         Put("Podaj czas fermentacji ");
+         return Duration'Value(Get_Line);
+      exception
+         when Data_Error => Put_Line("Data Error! Podaj czas fermentacji (Duration)"); return Duration'Value(Get_Line);
+         when Constraint_Error => Put_Line("Constraint Error! Podaj czas fermentacji (Duration)"); return Duration'Value(Get_Line);
+      end Pobierz_Czas_Fermentacji;	
+      
       function Pobierz_Czas_Gotowania return Duration is
       begin
          Clear_Screen (Light_Cyan);
@@ -127,20 +162,27 @@ package body Main_Menu is
          Goto_XY (31, 4);
          Put("Podaj czas gotowania ");
          return Duration'Value(Get_Line);
-         exception
+      exception
          when Data_Error => Put_Line("Data Error! Podaj czas gotowania (Duration)"); return Duration'Value(Get_Line);
          when Constraint_Error => Put_Line("Constraint Error! Podaj czas gotowania (Duration)"); return Duration'Value(Get_Line);
       end Pobierz_Czas_Gotowania;	
 			
       function Pobierz_Czas_Chmielenia return Duration is
+         Chmielenie_temp : Duration;
       begin
          Clear_Screen (Light_Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (31, 4);
          Put("Podaj czas chmielenia " & Chmielenie'Img & " ");
-         return Duration'Value(Get_Line);
+         Chmielenie_temp := Duration'Value(Get_Line);
+         if (Chmielenie_temp > Czas_Gotowania) then
+            raise Blad_Czasu_Chmielenia;
+         else
+            return Chmielenie_temp;
+         end if;
       exception
+         when Blad_Czasu_Chmielenia => Put_Line("Error! Podaj czas chmielenia mniejszy od czasu gotownia" & Czas_Gotowania'Img); return Duration'Value(Get_Line);
          when Data_Error => Put_Line("Data Error! Podaj czas chmielenia " & Chmielenie'Img & " (Duration)"); return Duration'Value(Get_Line);
          when Constraint_Error => Put_Line("Constraint Error! Podaj czas chmielenia " & Chmielenie'Img & " (Duration)"); return Duration'Value(Get_Line);
       end Pobierz_Czas_Chmielenia;	
@@ -201,15 +243,15 @@ package body Main_Menu is
          Put("* KONTROLA FERMENTACJI PIWA *");
          Set_Background (Light_Blue);
          Set_Foreground (Light_Cyan);
-         Goto_XY (24, 2);
+         Goto_XY (24, 6);
          Put("Nacisnij F aby zaczac fermentacje");
-         Goto_XY (25, 4);
+         Goto_XY (25, 2);
          Put("Nacisnij Z aby zaczac zacieranie");
-         Goto_XY (25, 6);
+         Goto_XY (19, 4);
          Put("Nacisnij G aby zaczac gotowanie i chlodzenie");
          Set_Foreground (Yellow);
-         Goto_XY (30, 8);
-         Put("Please press Q to exit");
+         Goto_XY (27, 10);
+         Put("Nacisnij Q aby wyjsc z programu");
          Get_Immediate(Zn);
          if((Zn = 'f') or (Zn = 'F')) then
             Get_Temp_Otoczenia;
@@ -217,6 +259,7 @@ package body Main_Menu is
             Get_Temp_Max;
             Get_Styl_Piwa;
             Get_Nazwa_Piwa;
+            Czas_Fermentacji := Pobierz_Czas_Fermentacji;
             Fermentacja(Nazwa_Piwa, Styl, Czas_Fermentacji, Temp_Otoczenia, Temp_Min, Temp_Max);
          elsif ((Zn = 'z') or (Zn = 'Z')) then
             Czas_Faza_1 := Pobierz_Czas;
