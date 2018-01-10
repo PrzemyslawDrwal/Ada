@@ -5,15 +5,14 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Synchronous_Task_Control;
 use Ada.Synchronous_Task_Control;
+with Ada.Float_Text_IO;
+use Ada.Float_Text_IO;
+
 
 package body Obsluga_G is
-   T_Got : Duration := 10.0;
-   T_1 : Duration := 1.0;
-   T_2 : Duration := 5.0;
-   T_3 : Duration := 8.0;
-   T_End : Float := 18.0;
-   Zn: Character := ' ';
    procedure Gotowanie_Chlodzenie(Czas_Gotowania : in Duration; Chmielenie_Jeden : in Duration; Chmielenie_Dwa : in Duration; Chmielenie_Trzy : in Duration; Temp_Koniec_Chlodzenia : in Float) is 
+      package Duration_IO is new Fixed_IO(Duration);
+	  Zn: Character := ' ';
       Koniec_Chmielenie : Boolean := False with Atomic;
       Chmielenie_Zakonczone : Boolean := False with Atomic;
       Aktualna_Temperatura : Float := 70.0 with atomic;
@@ -21,9 +20,7 @@ package body Obsluga_G is
       Ogrzewanie_Aktywne : Boolean := True;
       type STANY is (PODGRZEWANIE, GOTOWANIE, CHLODZENIE);
       type CHMIELENIE is (INIT, JEDEN, DWA, TRZY, WAIT);
-	  
-      
-		
+	
       Sem_We, Sem_Wy : Suspension_Object;
       Buf: Float;
 
@@ -115,8 +112,6 @@ package body Obsluga_G is
 
       task body Modul_Kontrolny is
          Aktualny_Czas : Ada.Calendar.Time;
-         --           Aktualny_Stan : STANY := PODGRZEWANIE;
-         --           Aktualne_Chmielenie : CHMIELENIE := INIT;
          ACzas_Gotowania :  Ada.Calendar.Time;
          Czas_1 :  Ada.Calendar.Time;
          Czas_2 :  Ada.Calendar.Time;
@@ -125,8 +120,6 @@ package body Obsluga_G is
          loop 
             case ( Aktualny_Stan ) is
             when PODGRZEWANIE =>
-               --Put_Line("Zyje");
-               --Put_Line(Aktualna_Temperatura'Img);
                if(Aktualna_Temperatura < 99.9) then
                   Chlodzenie_Ogrzewanie.Aktywuj_Ogrzewanie;
                   Aktualny_Stan := PODGRZEWANIE;
@@ -168,6 +161,7 @@ package body Obsluga_G is
                         Aktualne_Chmielenie := DWA;
                      end if;		
                   when TRZY =>
+                     delay until ACzas_Gotowania + Czas_Gotowania - 2.0;
                      Aktualne_Chmielenie := WAIT;
                   when WAIT =>
                      delay until ACzas_Gotowania + Czas_Gotowania - 1.0;
@@ -179,6 +173,7 @@ package body Obsluga_G is
             when CHLODZENIE =>
                if(Aktualna_Temperatura > Temp_Koniec_Chlodzenia) then
                   Chlodzenie_Ogrzewanie.Aktywuj_Chlodzenie;
+                  Aktualny_Stan := CHLODZENIE;
                else
                   Chlodzenie_Ogrzewanie.Wylacz_Chlodzenie;
                   Chmielenie_Zakonczone := True;
@@ -192,23 +187,32 @@ package body Obsluga_G is
       task body Display_Menu is
 
       begin
-         --loop
          Clear_Screen (Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (20, 0);
-         Put_Line("* KONTROLA FERMENTACJI PIWA - CHMIELENIE * ");
+         Put_Line("* KONTROLA FERMENTACJI PIWA - CHMIELENIE *");
          Set_Background (Cyan);
          Goto_XY (0, 2);
-         Put_Line("Czas Gotowania: " & Czas_Gotowania'Img);
+         --Put_Line("Czas Gotowania: " & Czas_Gotowania'Img);
+		 Put("Czas Gotowania: ");
+		 Duration_IO.Put(Czas_Gotowania,2,4);
          Goto_XY (0, 4);
-         Put_Line("Chmielenie Jeden: " & Chmielenie_Jeden'Img);
+         --Put_Line("Chmielenie Jeden: " & Chmielenie_Jeden'Img);
+		 Put("Chmielenie Jeden: ");
+		 Duration_IO.Put(Chmielenie_Jeden,2,4);
          Goto_XY (0, 6);
-         Put("Chmielenie Dwa: " & Chmielenie_Dwa'Img);
+         --Put("Chmielenie Dwa: " & Chmielenie_Dwa'Img);
+		 Put("Chmielenie Dwa: ");
+		 Duration_IO.Put(Chmielenie_Dwa,2,4);
          Goto_XY (0, 8);
-         Put("Chmielenie Trzy: " & Chmielenie_Trzy'Img);
+         --Put("Chmielenie Trzy: " & Chmielenie_Trzy'Img);
+		 Put("Chmielenie Trzy: ");
+		 Duration_IO.Put(Chmielenie_Trzy,2,4);
          Goto_XY (0, 10);
-         Put("Temp Koniec Chlodzenia: " & Temp_Koniec_Chlodzenia'Img);
+         --Put("Temp Koniec Chlodzenia: " & Temp_Koniec_Chlodzenia'Img);
+		 Put("Temp Koniec Chlodzenia: ");
+		 Put(Temp_Koniec_Chlodzenia,2,4,0);
          Set_Foreground (Yellow);
          Goto_XY (22, 24);
          Put("Nacisnij S aby wrocic do menu glownego");
@@ -235,21 +239,30 @@ package body Obsluga_G is
                Set_Foreground (Blue);
                Put("Chmielenie: " & Aktualne_Chmielenie'Img);
                Goto_XY (0, 16);
-               Put("Aktualna Temperatura: " & Aktualna_Temperatura'Img);
-               
+               --Put("Aktualna Temperatura: " & Aktualna_Temperatura'Img);
+			   Put("Aktualna Temperatura: ");
+			   Put(Aktualna_Temperatura,2,4,0);
                Goto_XY (0, 20);
+               Set_Foreground (Red);
                case (Aktualne_Chmielenie) is
                when JEDEN =>
                   Put_Line("Dodaj pierwsza porcje chmielu");
                when DWA =>
+                  Set_Foreground (Light_Cyan);
+                  Put_Line("                              ");
+                  Goto_XY (0, 20);
+                  Set_Foreground (Red);
                   Put_Line("Dodaj druga porcje chmielu"); 
                when TRZY => 
+                  Set_Foreground (Light_Cyan);
+                  Put_Line("                              ");
+                  Goto_XY (0, 20);
+                  Set_Foreground (Red);
                   Put_Line("Dodaj trzecia porcje chmielu");
                when others =>
                   Set_Foreground (Cyan);
-                  Put_Line("                               ");
-               end case;
-               
+                  Put_Line("                              ");
+               end case;  
             end if;
             delay 0.05;
             exit when Koniec_Chmielenie;

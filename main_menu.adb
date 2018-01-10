@@ -12,10 +12,7 @@ use Obsluga_G;
 
 package body Main_Menu is
    procedure Menu is
-      ----
-      --type Style is (Lager, Ale, Hefeweizen, Abbaye, Kveik);
       Styl : Style;
-
       Czas_Fermentacji : Duration := 100.0;
       Temp_Otoczenia : Integer := 18;
       Zn: Character := ' ';
@@ -32,7 +29,6 @@ package body Main_Menu is
       Temp_Faza_3 : Float := 72.0;
       Czas_Faza_4 : Duration := 100.0; 
       Temp_Faza_4 : Float := 78.0;
-      Bledy : String := "Brak bledow                                ";
       Chmielenie : Integer := 1;
       Czas_Gotowania : Duration; 
       Chmielenie_Jeden : Duration;
@@ -49,7 +45,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
-         Put("Podaj temperature max ");
+         Put("Podaj temperature max [C] ");
          Temp_Max := Float'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj temperature max (float)"); Temp_Max := Float'Value(Get_Line);
@@ -62,7 +58,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
-         Put("Podaj temperature min ");
+         Put("Podaj temperature min [C] ");
          Temp_Min := Float'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj temperature min (float)"); Temp_Min := Float'Value(Get_Line);
@@ -75,7 +71,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
-         Put("Podaj temperature otoczenia ");
+         Put("Podaj temperature otoczenia [C] ");
          Temp_Otoczenia := Integer'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj temperature otoczenia (integer)"); Temp_Otoczenia := Integer'Value(Get_Line);
@@ -102,7 +98,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
-         Put("Podaj temperature fazy " & Faza'Img & " ");
+         Put("Podaj temperature fazy [C] " & Faza'Img & " ");
          Temperatura_temp := Float'Value(Get_Line);
          case (Faza) is
          when 2 => if (Temp_Faza_1 > Temperatura_temp) then 
@@ -134,7 +130,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (31, 4);
-         Put("Podaj czas fazy " & Faza'Img & " ");
+         Put("Podaj czas fazy  " & Faza'Img & "  [sek] ");
          return Duration'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj czas fazy " & Faza'Img & " (Duration)"); return Duration'Value(Get_Line);
@@ -147,7 +143,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (30, 4);
-         Put("Podaj czas fermentacji ");
+         Put("Podaj czas fermentacji [sek] ");
          return Duration'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj czas fermentacji (Duration)"); return Duration'Value(Get_Line);
@@ -160,7 +156,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (31, 4);
-         Put("Podaj czas gotowania ");
+         Put("Podaj czas gotowania [sek] ");
          return Duration'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj czas gotowania (Duration)"); return Duration'Value(Get_Line);
@@ -174,7 +170,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (31, 4);
-         Put("Podaj czas chmielenia " & Chmielenie'Img & " ");
+         Put("Podaj czas chmielenia [sek] " & Chmielenie'Img & " ");
          Chmielenie_temp := Duration'Value(Get_Line);
          if (Chmielenie_temp > Czas_Gotowania) then
             raise Blad_Czasu_Chmielenia;
@@ -193,7 +189,7 @@ package body Main_Menu is
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 4);
-         Put("Podaj temperature Koniec Chlodzenia ");
+         Put("Podaj temperature Koniec Chlodzenia [C] ");
          return Float'Value(Get_Line);
       exception
          when Data_Error => Put_Line("Data Error! Podaj temperature Koniec Chlodzenia (float)"); return Float'Value(Get_Line);
@@ -237,6 +233,7 @@ package body Main_Menu is
    begin
       loop
          Clear_Screen (Light_Blue);
+         Set_Cursor(False);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (27, 0);

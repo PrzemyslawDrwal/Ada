@@ -3,6 +3,8 @@ use Ada.Text_IO, Ada.Calendar;
 with NT_Console;              use NT_Console;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Float_Text_IO;
+use Ada.Float_Text_IO;
 
 package body Obsluga_Z is 
 
@@ -110,7 +112,6 @@ package body Obsluga_Z is
          Aktualny_Czas : Ada.Calendar.Time;
       begin
          loop 
-
             case Faza is
             when 1 =>
                Aktualny_Czas := Ada.Calendar.Clock;
@@ -164,7 +165,6 @@ package body Obsluga_Z is
       task body Display_Menu is
 
       begin
-         --loop
          Clear_Screen (Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
@@ -172,13 +172,21 @@ package body Obsluga_Z is
          Put_Line("* KONTROLA FERMENTACJI PIWA - ZACIERANIE *");
          Set_Background (Cyan);
          Goto_XY (0, 2);
-         Put_Line("Temp Faza 1: " & Temp_Faza_1'Img);
+         --Put_Line("Temp Faza 1: " & Temp_Faza_1'Img);
+		 Put("Temp Faza 1: ");
+		 Put(Temp_Faza_1,2,4,0);
          Goto_XY (0, 4);
-         Put_Line("Temp Faza 2: " & Temp_Faza_2'Img);
+         --Put_Line("Temp Faza 2: " & Temp_Faza_2'Img);
+		 Put("Temp Faza 2: ");
+		 Put(Temp_Faza_2,2,4,0);
          Goto_XY (0, 6);
-         Put_Line("Temp Faza 3: " & Temp_Faza_3'Img);
+         --Put_Line("Temp Faza 3: " & Temp_Faza_3'Img);
+		 Put("Temp Faza 3: ");
+		 Put(Temp_Faza_3,2,4,0);
          Goto_XY (0, 8);
-         Put_Line("Temp Faza 4: " & Temp_Faza_4'Img);
+         --Put_Line("Temp Faza 4: " & Temp_Faza_4'Img);
+		 Put("Temp Faza 4: ");
+		 Put(Temp_Faza_4,2,4,0);
          Set_Foreground (Yellow);
          Goto_XY (22, 18);
          Put("Nacisnij S aby wrocic do menu glownego");
@@ -193,7 +201,9 @@ package body Obsluga_Z is
                Set_Background (Cyan);
                Set_Foreground (Blue);
                Goto_XY (0, 10);
-               Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+               --Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+			   Put("Aktualna Temperatura ");
+			   Put(Aktualna_Temperatura,2,4,0);
                Goto_XY (0, 12);
                Put("Faza: " & Faza'Img);
             end if;

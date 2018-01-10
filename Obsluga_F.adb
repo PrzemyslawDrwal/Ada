@@ -1,26 +1,19 @@
 with Ada.Text_IO, Ada.Calendar;
 use Ada.Text_IO, Ada.Calendar;
-
 with NT_Console;              use NT_Console;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-
 with Ada.Calendar.Formatting;
 use Ada.Calendar.Formatting;
-
 with Ada.Numerics.Float_Random;
 use Ada.Numerics.Float_Random;
-
-
 with Ada.Directories; use Ada.Directories;
-
-
+with Ada.Float_Text_IO;
+use Ada.Float_Text_IO;
 
 package body Obsluga_F is 
-   --type Style is (Lager, Ale, Hefeweizen, Abbaye, Kveik);
-   Zn: Character := ' ';
-
    procedure Fermentacja (Nazwa_Piwa : in String; Styl : in Style; Czas_Fermentacji : in Duration; Temp_Otoczenia : in Integer; Temp_Min_O : in Float; Temp_Max_O : in Float) is
+      Zn: Character := ' ';
       Aktualna_Temperatura : Float := 18.0;
       Chlodzenie_Aktywne : Boolean := False;
       Aktualna_Temperatura_Otoczenia : Float;
@@ -101,7 +94,6 @@ package body Obsluga_F is
             Aktualny_Czas_Odczyt_Temperatury := Aktualny_Czas_Odczyt_Temperatury + Okres_Odczytu;	
             Bufor_Pomiar_Temperatury_Fermentor.Pobierz(Temp_Tymczasowa);
             Aktualna_Temperatura := Temp_Tymczasowa;
-            --Put_Line(Aktualna_Temperatura'Img);
             exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
       end Czytaj_Termometr_Fermentor;
@@ -227,19 +219,14 @@ package body Obsluga_F is
 		
          loop
             if(Aktualna_Temperatura <= Temp_Min or  Aktualna_Temperatura >= (Temp_Max+Temp_Min)/2.0) then
-               Modul_Chlodzenia.Aktywuj_Chlodzenie;
-               --Put_Line("Chlodzenie aktywne" & Aktualna_Temperatura'Img);
-            else 	
+               Modul_Chlodzenia.Aktywuj_Chlodzenie;            else 	
                Modul_Chlodzenia.Wylacz_Chlodzenie;
-               --Put_Line("Chlodzenie nieaktywne" & Aktualna_Temperatura'Img);
             end if;
 		
             if((Aktualna_Temperatura_Otoczenia < Temp_Max_O ) and Aktualna_Temperatura_Otoczenia > Temp_Min_O) then
                Temp_Otoczenia_Ok := True;
-               --Put_Line("Temp otoczenia ok" & Aktualna_Temperatura_Otoczenia'Img);
             else 
                Temp_Otoczenia_Ok := False;
-               --Put_Line("Temp otoczenia nie ok" & Aktualna_Temperatura_Otoczenia'Img);
             end if;
             exit when Koniec_Fermentacja or Fermentacja_Zakonczona;
          end loop;
@@ -281,9 +268,7 @@ package body Obsluga_F is
 
       task body Pomiar_Czasu is
          Aktualny_Czas : Ada.Calendar.Time;
-         --Czas_Fermentacji : Duration := 1000.0;
          Czas_Startowy : Ada.Calendar.Time;
-	
       begin 
          Czas_Startowy := Ada.Calendar.Clock + Czas_Fermentacji;
          loop
@@ -304,19 +289,22 @@ package body Obsluga_F is
       task body Display_Menu is
 
       begin
-         --loop
          Clear_Screen (Cyan);
          Set_Foreground (Blue);
          Set_Background (Yellow);
          Goto_XY (20, 0);
-         Put_Line("* KONTROLA FERMENTACJI PIWA - FERMENTACJA * ");
+         Put_Line("* KONTROLA FERMENTACJI PIWA - FERMENTACJA *");
          Set_Background (Cyan);
          Goto_XY (0, 2);
          Put_Line("Styl Piwa: " & Styl'Img);
          Goto_XY (0, 4);
          Put_Line("Nazwa Piwa: " & Nazwa_Piwa);
          Goto_XY (0, 6);
-         Put("Zadany Zakres Temperatury " & Temp_Min_O'Img & " -" & Temp_Max_O'Img);
+         --Put("Zadany Zakres Temperatury " & Temp_Min_O'Img & " -" & Temp_Max_O'Img);
+		 Put("Zadany Zakres Temperatury ");
+		 Put(Temp_Min_O,2,4,0);
+		 Put(" - ");
+		 Put(Temp_Max_O,2,4,0);
          Goto_XY (0, 8);
          Put("Podana Temperatura Otoczenia " & Temp_Otoczenia'Img);
          Set_Foreground (Yellow);
@@ -333,7 +321,9 @@ package body Obsluga_F is
                Set_Background (Cyan);
                Set_Foreground (Blue);
                Goto_XY (0, 10);
-               Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+              --Put("Aktualna Temperatura " & Aktualna_Temperatura'Img);
+			   Put("Aktualna Temperatura ");
+			   Put(Aktualna_Temperatura,2,4,0);
                Goto_XY (0, 12);
                Set_Foreground (Cyan);
                Put("Chlodzenie Aktywne?       ");
@@ -341,7 +331,9 @@ package body Obsluga_F is
                Set_Foreground (Blue);
                Put("Chlodzenie Aktywne? " & Chlodzenie_Aktywne'Img);
                Goto_XY (0, 14);
-               Put("Aktualna Temperatura Otoczenia " & Aktualna_Temperatura_Otoczenia'Img);
+               --Put("Aktualna Temperatura Otoczenia " & Aktualna_Temperatura_Otoczenia'Img);
+			   Put("Aktualna Temperatura Otoczenia ");
+			   Put(Aktualna_Temperatura_Otoczenia,2,4,0);
             end if;
             delay 0.05;
             exit when Koniec_Fermentacja;
